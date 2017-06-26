@@ -1,7 +1,7 @@
 # BADS-Customer_churn
 
 
-#Index
+# Index
 
 1.	Introduction
 2.	Analysis
@@ -12,7 +12,7 @@
 3. Conclusions and Limitations
 Bibliography
 
-##1. Introduction
+## 1. Introduction
 
 Two of the main objectives of companies is to acquire new customers and to retain those customers that have already been acquired. The value of a customer goes beyond its actual purchase: long term customers usually spend more and more often, are less vulnerable to competitor offers and can spread positive feedbacks about the company.  It is, therefore, important to take into account the so called “customer lifetime value”, namely the value of a customer relationship based on the present value of the projected future cash flows from its relationship (Farris et al. 2010). It is the role of the customer relationship management (CRM) to deal with the entire lifetime of a company's customers and with this regard predictive modelling has been widely studied and applied by the data mining and machine learning communities to tackle those problems (Bahnsen et al. 2015).
 
@@ -27,9 +27,9 @@ A coupon poses a cost of foregone profit to the retailer when it is used. In cas
 In many other real-world applications, the differences between different misclassification errors can be quite large. Cost-sensitive learning has therefore received much attention in recent years to deal with such an issue (Elkan C. 2001). 
 In our paper, we are going to apply a set of models and evaluate them on the base of the expected net benefit of their predictions using a customized evaluation function with an empirical tested threshold (Sheng et al. 2006).
 
-##2.	Analysis
+## 2.	Analysis
 
-###2.1 Experimental Setup
+### 2.1 Experimental Setup
 
 As mentioned above, the underlying prediction problem is a binary classification which is additionally characterized by data imbalance and cost sensitivity. As an imbalanced classification problem, we consider a classification problem where “the examples of one class significantly outnumber the examples of another class” (López et al., 2013). Moreover, “the minority class represents the most important concept to be learned” (lbid). Although there is no fixed definition of what “significantly outnumber the examples of another class” exactly means, i.e. there is no benchmark ratio that defines datasets as imbalanced, we consider the underlying imbalance-ratio (ratio of number of majority cases to the number of minority cases) of 4.3 within the target variable as a justifying indicator of an imbalanced data set. This imbalance needs to be acknowledged in the analysis since “most commonly used classification algorithms do not work well for such problems because they aim to minimize the overall error rate, rather than paying special attention to the positive class” (Chen et al. 2004). This bias towards predicting the majority class is particularly problematic if there are different costs associated with wrongly classifying the cases (cost sensitivity) which is the case in the underlying problem (see above).
 Many methods have been proposed to tackle the problem of class imbalance which can be broadly grouped into three categories:
@@ -49,7 +49,7 @@ After resampling the training set to a class-ratio of 1:1, we apply the same ste
 Lastly, we create another ensemble that is modified in such a way that it induces a better degree of diversity in base model predictions by manipulating some of these models to be over-optimistic (tendency to predict the positive case with a higher probability) – compared to the rather over-pessimistic, unmanipulated base models.
 Finally, we compare all approaches based on the cost measure and decide for the best approach that we will then use for predicting the class data.   
 
-###2.2   Data 
+### 2.2   Data 
 
 The raw form of the provided data set does not yet allow for further analysis and must therefore be processed accordingly to get the data into a feasible format. The following lines present a documentation of the data processing that has been done.
 As a first step, we identify those variables that are by their nature categorical and transform them into the according format. In R, a useful approach to handle categorical variables is the usage of the “factor” format which transforms variables into categorical ones and enables automatic creation of dummy variables within algorithms. Hence, we transform the following variables into factors: title, giftwrapping, coupon, newsletter, delivery, referrer, cost shipping, form of address, model, goods value, advertising code and return customer. Furthermore, we transform the date variables (order date, account creation date, delivery date actual and delivery date estimated) into the “year-month-day” format. The weight variable is discretized by binning it into four intervals and transformed into a factor after.
@@ -71,19 +71,19 @@ Moreover, the following new features are generated:
 The remaining numeric variables in the set are now standardized.
 To enable both remaining date variables (order_date_new, account_creation_date_new) to be included in the algorithms that we later use for analysis, we transform them to factors (some algorithms cannot handle variables in date format). This results in two factor variables with each 12 levels. As mentioned above, R automatically generates the necessary dummy variables from factor-type variables resulting k-1 dummies for a k-level factor variable. Thus, a dataset containing many factor variables (that each may have many levels) can quickly become infeasible in terms of dimensionality. We therefore decide to replace email_domain, weight, advertising_code, order_date_new, postcode_invoice and account_creation_date_new by their weight of evidence (WOE). We estimate the WOE, following Zdravevski et al. (2011), on a training set that contains 50% of the data and replace the mentioned factor variables by it. Due to a very low information value for email_domain and postcode_invoice, we remove these variables. Further, we remove delivery from the data set because it is “Yes” if and only if payment is “Cash”. Thus, it is linearly dependent and all information is already incorporated in payment.
 
-###2.3   Performance Measure 
+### 2.3   Performance Measure 
 
 Most classifiers aim to minimize the overall error rate, which is a valid strategy only if the costs of different errors are equal. In our specific classification problem, we are dealing with an asymmetric cost matrix, in fact predicting customers to not return and therefore sending him a coupon, when he would have returned anyway has a greater cost than not sending a coupon to a customer that would have not returned. The table below shows the cost-benefit matrix of the underlying classification problem.
 
  
-Figure 2: Cost-Benefit matrix
+
 
 A crucial step in our analysis is to define the right evaluation criteria for our models in order to take into account those different costs. We, therefore, decided to implement an empirical thresholding method as it is proposed for example in Sheng et al. (2006). Since our base models predictions are probabilities, we iterate through every possible cut-off from 0.01 to 1 in 0.001 steps to decide for a case to return or not. For every cut-off, the costs are calculated according to the cost matrix. 
 For finding the optimal threshold we calculate an upper benchmark which is equivalent to the possible gain achievable, if every case is correctly predicted. Consequently, our performance measure calculates the percentage of the gain of every threshold compared to the upper benchmark and returns the threshold with the best value. We also take into account a lower benchmark, that is a minimum level of gain that our model should achieve in order to add any value. Due to the class distribution within the dataset and the cost matrix it can easily be computed as follows: 
 If the class distribution is considered as an estimate of a customer to return or not, the probability of a customer returning is 9773/51884 = 0.19. Hence, the expected profit per customer is calculated by 0.81*3 - 0.19*10 = 0.53 > 0. Since the expected profit per customer (without any knowledge of the likelihood of a return!) is positive, it is only reasonable to send a coupon to every customer. Consequently, our model must beat the lower benchmark, that is, the gain that is achieved without any knowledge and thus by sending a coupon to everyone.
 
 
-###2.4 Model Evaluation 
+### 2.4 Model Evaluation 
 The following table summarizes the results of the first part of the analysis:
 	Random Forest	Neural Network	Gradient Boosting	Logistic Regression	 Stacked Ensemble
 Original Data	0.307805	0.3284256	0.3331354	0.3351144	 0.3366975
@@ -93,12 +93,8 @@ Table 1: Comparison of the performance of the best tuned versions of each consid
 The base models perform on a comparable level, i.e. no model significantly outperforms the others. Notably, throughout many simulations on different data, the logistic regression which is the least “sophisticated” model performed if ever slightly less well than the gradient boosting (which was most often slightly better than the others) and often enough achieved almost equal or even little better gain. When comparing the confusion matrices of the single models at the level of the optimal calculated cut-off level it becomes evident that all models tend to underestimate the likelihood of a return and thus have a strong tendency to predict the negative cases. It is therefore surprising that the models perform significantly worse when trained on SMOTE data that contain an equal amount of cases. As expected, they had a good performance on cross validation sets (since they were generated from the SMOTE training set), however, the structure these models learned on the SMOTE data did apparently not describe the structure of the real data well. Further simulations with SMOTE data that is less balanced (we used 1:1) could potentially improve overall performance. 
 Due to the similarity of the base model predictions, we expected the ensemble not to be significantly superior to the single models and indeed, it could not achieve an important amount of additional gain. Hence, we simulated another approach in which we try to manipulate the balance of the ensemble by combining over-optimistic predictions with the rather pessimistic predictions from the standard base models. We achieve that by inducing class weights into the random forest algorithm, thereby pushing it towards the positive class. We simulate several runs where we either manipulate the ensemble balance by the number of overconfident random forests we add, by the degree of their overconfidence or both. Results show that a higher number of less strictly manipulated random forests within the ensemble does not significantly improve the results compared to less manipulated trees that, however, are manipulated by their class weight more strictly. Consequently, we decide for a final ensemble that contains two additional random forests where the class weight that is put to the positive class is four times bigger than the class weight of the negative class. 
 
-	Random Forest	Neural 
-Network	Gradient Boosting	Logistic Regression	 Stacked  Ensemble	Stacked Ensemble
-(modified)
-Original Data	0.307805	0.3284256	0.3331354	0.3351144	 0.3366975	 0.345035
-SMOTE (1:1)	0.302066	0.2675532	0.3287422	0.2881343	     ---	 --- 
-Table 2: Comparison of the modified ensemble with the former models
+
+
 By looking at the correlation between the predictions of the new ensemble one can see a slight improvement, although they are (as expected) still very correlated. What improves, however, is the diversity within the predictions since the two manipulated random forests predict the positive class with significant higher probability. As table 2 shows, this diversity in predictions gets accounted for in the ensemble as the performance increases by 0.9% to 34.5% of the maximum gain compared to the standard ensemble model. 
 Consequently, we decide for the manipulated ensemble model to predict the customer return in the final data set. Compared to the lower benchmark given the test set size of 10376 observations this prediction model generates an 58.5% improvement over sending a coupon to everyone which would be achieve a gain of 10376*0.53 = 5499, whereas our model generates a gain of 8717. 
 3.  Conclusion and Limitations
@@ -121,7 +117,7 @@ We applied several machine learning algorithms that showed to perform comparably
 
 
 
-#Bibliography
+# Bibliography
 
 Bahnsen, Alejandro Correa, Djamila Aouada, and Björn Ottersten. "A novel cost-sensitive framework for customer churn predictive modeling." Decision Analytics 2.1 (2015): 5.
 Breiman, Leo. "Random forests." Machine learning 45.1 (2001): 5-32.
